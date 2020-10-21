@@ -27,6 +27,8 @@ var reason = flag.String("reason", "西市买鞍鞯", "出入校事由")
 var track = flag.String("track", "北大西门-畅春园-北大西门", "出校行动轨迹")
 var ftKey string
 
+var single = flag.Bool("single", false, "同时填报出入校")
+
 func errorNotifier(title string) {
 	if err := recover(); err != nil {
 		notifier.Ft(ftKey, title, *username)
@@ -520,6 +522,30 @@ func getSqzt(sid string) (string, string) {
 }
 
 
+func inGithubActions() bool {
+	return os.Getenv("GITHUB_ACTIONS") == "true"
+}
+
+func submitOut(sid string) {
+	row := saveOut(sid)
+	if submitSqxx(sid, row) {
+		notifier.Ft(ftKey, "出校备案成功", *username)
+	}
+}
+
+func submitIn(sid string) {
+	row := saveIn(sid)
+	if submitSqxx(sid, row) {
+		notifier.Ft(ftKey, "入校备案成功", *username)
+	}
+}
+
+func isMorning() bool {
+	timeLocal, _ := time.LoadLocation("Asia/Chongqing")
+	time.Local = timeLocal
+	return time.Now().Local().Hour() < 12
+}
+
 func main() {
 	initCookies()
 	initFlags()
@@ -532,13 +558,14 @@ func main() {
 	testSimso()
 
 	email, lxdh = getSqzt(sid)
-
-	row := saveOut(sid)
-	if submitSqxx(sid, row) {
-		notifier.Ft(ftKey, "出校备案成功", *username)
-	}
-	row = saveIn(sid)
-	if submitSqxx(sid, row) {
-		notifier.Ft(ftKey, "入校备案成功", *username)
+	if inGithubActions() && !*single {
+		if isMorning() {
+			submitOut(sid)
+		} else {
+			submitIn(sid)
+		}
+	} else {
+		submitOut(sid)
+		submitIn(sid)
 	}
 }
