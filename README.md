@@ -15,7 +15,20 @@
 
 ### github actions 自动执行
 
-配置文件在[go.yml](.github/workflows/go.yml)，目前配置为每天北京时间8点执行一次。
+配置文件在[go.yml](.github/workflows/go.yml)，目前配置为每天两次执行，分别备案出校和入校。
+
+**Warning**: 两次执行的判断逻辑为查看运行时的北京时间是上午还是下午，如果需要修改定时执行的时间，务必设置两个跨UTC+8的12点的时间
+
+**Warning**: 本地运行时默认为同时填报，也可以通过命令行参数添加`--single`恢复为一次执行两个填报，这样即使在github actions中也会一次执行出入校的填报，例如
+
+```yaml
+- name: Run
+      env:
+        USERNAME: ${{ secrets.USERNAME }}
+        PASSWORD: ${{ secrets.PASSWORD }}
+        FT_SCKEY: ${{ secrets.FT_SCKEY }}
+      run: ./autosubmit --single
+```
 
 #### github actions 配置
 
